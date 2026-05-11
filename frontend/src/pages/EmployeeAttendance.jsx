@@ -73,9 +73,10 @@ const EmployeeAttendance = () => {
                   Out: {format(new Date(todayAttendance.clock_out), 'hh:mm:ss a')}
                 </div>
               )}
-              {todayAttendance?.work_hours && (
-                <div className="text-gray-500">Hours: {todayAttendance.work_hours}h</div>
-              )}
+              {todayAttendance?.clock_in && todayAttendance?.clock_out && (() => {
+                const hrs = (new Date(todayAttendance.clock_out) - new Date(todayAttendance.clock_in)) / (1000 * 60 * 60);
+                return <div className="text-gray-500">Hours: {hrs.toFixed(2)}h</div>;
+              })()}
             </div>
           </div>
         </motion.div>
@@ -100,7 +101,7 @@ const EmployeeAttendance = () => {
                     <td className="p-4">{format(new Date(record.date), 'MMM dd, yyyy')}</td>
                     <td className="p-4">{record.clock_in ? format(new Date(record.clock_in), 'hh:mm:ss a') : '-'}</td>
                     <td className="p-4">{record.clock_out ? format(new Date(record.clock_out), 'hh:mm:ss a') : '-'}</td>
-                    <td className="p-4">{record.work_hours ? `${record.work_hours}h` : '-'}</td>
+                    <td className="p-4">{record.clock_in && record.clock_out ? `${((new Date(record.clock_out) - new Date(record.clock_in)) / (1000 * 60 * 60)).toFixed(2)}h` : '-'}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         record.status === 'present' ? 'bg-green-100 text-green-800' :

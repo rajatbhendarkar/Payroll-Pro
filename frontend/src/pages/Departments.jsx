@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiX, FiUser } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import Sidebar from '../components/Sidebar';
-import { departmentAPI } from '../services/api';
+import { departmentAPI, employeeAPI } from '../services/api';
 
 const Departments = () => {
   const [departments, setDepartments] = useState([]);
@@ -29,7 +29,7 @@ const Departments = () => {
     e.preventDefault();
     try {
       if (editMode) {
-        await departmentAPI.update(currentDept._id, formData);
+        await departmentAPI.update(currentDept.id, formData);
         toast.success('Department updated successfully');
       } else {
         await departmentAPI.create(formData);
@@ -68,6 +68,19 @@ const Departments = () => {
     setCurrentDept(null);
   };
 
+  const [deptEmployees, setDeptEmployees] = useState([]);
+  const [selectedDept, setSelectedDept] = useState(null);
+
+  const openDeptEmployees = async (dept) => {
+    setSelectedDept(dept);
+    try {
+      const { data } = await employeeAPI.getAll({ department: dept.id });
+      setDeptEmployees(data.data);
+    } catch {
+      toast.error('Failed to fetch employees');
+    }
+  };
+
   return (
     <div className="flex">
       <Sidebar />
@@ -82,11 +95,12 @@ const Departments = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {departments.map((dept, index) => (
             <motion.div
-              key={dept._id}
+              key={dept.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="card hover:shadow-xl transition-shadow"
+              className="card hover:shadow-xl transition-shadow cursor-pointer"
+              onClick={() => openDeptEmployees(dept)}
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -94,10 +108,10 @@ const Departments = () => {
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{dept.description}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => openEditModal(dept)} className="text-blue-600 hover:text-blue-800">
+                  <button onClick={(e) => { e.stopPropagation(); openEditModal(dept); }} className="text-blue-600 hover:text-blue-800">
                     <FiEdit size={18} />
                   </button>
-                  <button onClick={() => handleDelete(dept._id)} className="text-red-600 hover:text-red-800">
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(dept.id); }} className="text-red-600 hover:text-red-800">
                     <FiTrash2 size={18} />
                   </button>
                 </div>
@@ -109,6 +123,46 @@ const Departments = () => {
             </motion.div>
           ))}
         </div>
+
+        {selectedDept && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+            >
+              <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
+                <div>
+                  <h2 className="text-xl font-bold">{selectedDept.name}</h2>
+                  <p className="text-sm text-gray-500">{deptEmployees.length} employee{deptEmployees.length !== 1 ? 's' : ''}</p>
+                </div>
+                <button onClick={() => setSelectedDept(null)} className="text-gray-400 hover:text-gray-600">
+                  <FiX size={22} />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1 p-4 space-y-3">
+                {deptEmployees.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No employees in this department</p>
+                ) : (
+                  deptEmployees.map((emp) => (
+                    <div key={emp.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                      <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                        <FiUser className="text-primary-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{emp.name}</p>
+                        <p className="text-xs text-gray-500">{emp.email}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        emp.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>{emp.status}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

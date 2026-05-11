@@ -11,16 +11,16 @@ const StatCard = ({ icon: Icon, title, value, color, delay = 0, trend, trendLabe
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       whileHover={{ scale: 1.03, y: -4 }}
-      className={`${color} rounded-2xl p-6 cursor-pointer shadow-lg hover:shadow-xl transition-shadow`}
+      className={`${color} rounded-2xl p-4 lg:p-6 cursor-pointer shadow-lg hover:shadow-xl transition-shadow`}
     >
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium opacity-80 uppercase tracking-wide">{title}</p>
-          <p className="text-4xl font-bold mt-2 mb-1">{value}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs lg:text-sm font-medium opacity-80 uppercase tracking-wide leading-tight">{title}</p>
+          <p className="text-2xl lg:text-4xl font-bold mt-1 lg:mt-2 mb-1 truncate">{value}</p>
           {subtitle && <p className="text-xs opacity-70">{subtitle}</p>}
         </div>
-        <div className="bg-white/20 rounded-xl p-3">
-          <Icon className="text-2xl" />
+        <div className="bg-white/20 rounded-xl p-2 lg:p-3 ml-2 flex-shrink-0">
+          <Icon className="text-lg lg:text-2xl" />
         </div>
       </div>
       {trend !== undefined && (

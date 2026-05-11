@@ -1,6 +1,29 @@
+# Dependencies
 node_modules/
+*/node_modules/
+
+# Environment files
 .env
-dist/
-android/
-.DS_Store
+.env.local
+.env.production
+backend/.env
+
+# Build output
+frontend/dist/
+frontend/.vite/
+
+# Android (Capacitor)
+frontend/android/
+frontend/ios/
+
+# Logs
 *.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

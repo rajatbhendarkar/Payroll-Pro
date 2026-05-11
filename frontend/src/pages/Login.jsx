@@ -61,11 +61,10 @@ const Login = () => {
   const [remember, setRemember]       = useState(false);
 
   const [loginData,    setLoginData]    = useState({ email: '', password: '' });
-  const [registerData, setRegisterData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [forgotEmail,  setForgotEmail]  = useState('');
   const [resetData,    setResetData]    = useState({ email: '', otp: '', newPassword: '' });
 
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
 
@@ -88,19 +87,6 @@ const Login = () => {
       navigate(isAdmin ? '/admin' : '/employee');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
-    } finally { setLoading(false); }
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    if (registerData.password !== registerData.confirmPassword) { toast.error('Passwords do not match'); return; }
-    setLoading(true);
-    try {
-      await register({ name: registerData.name, email: registerData.email, password: registerData.password, role: 'admin' });
-      toast.success('Admin account created!');
-      navigate('/admin');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
     } finally { setLoading(false); }
   };
 
@@ -139,7 +125,6 @@ const Login = () => {
   /* ── View title map ── */
   const titles = {
     login:    { h: 'Welcome Back 👋',        sub: 'Sign in to continue to PayrollPro' },
-    register: { h: 'Create Admin Account',   sub: 'Set up your admin workspace' },
     forgot:   { h: 'Forgot Password?',       sub: "No worries, we'll send a reset code" },
     reset:    { h: 'Reset Password',         sub: 'Enter the code sent to your email' },
   };
@@ -263,17 +248,7 @@ const Login = () => {
               </div>
             )}
 
-            {/* Admin sub-tabs */}
-            {isAdmin && (view === 'login' || view === 'register') && (
-              <div className="flex gap-2 mb-5">
-                {['login', 'register'].map((v) => (
-                  <button key={v} type="button" onClick={() => setView(v)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize transition-all ${
-                      view === v ? 'bg-blue-600/30 text-blue-300 border border-blue-500/40' : 'text-gray-500 hover:text-gray-300'
-                    }`}>{v}</button>
-                ))}
-              </div>
-            )}
+            {/* Admin sub-tabs removed — login only */}
 
             {/* ── Forms ── */}
             <AnimatePresence mode="wait">
@@ -329,38 +304,7 @@ const Login = () => {
                 </motion.form>
               )}
 
-              {/* REGISTER */}
-              {view === 'register' && (
-                <motion.form key="register" {...slide} onSubmit={handleRegister} className="space-y-4">
-                  {[
-                    { icon: FiUser,  type: 'text',     ph: 'Full Name',          key: 'name' },
-                    { icon: FiMail,  type: 'email',    ph: 'admin@example.com',  key: 'email' },
-                    { icon: FiLock,  type: showPwd ? 'text' : 'password', ph: 'Password (min 6)', key: 'password', minLength: 6 },
-                    { icon: FiLock,  type: 'password', ph: 'Confirm Password',   key: 'confirmPassword' },
-                  ].map(({ icon: Icon, type, ph, key, minLength }) => (
-                    <div key={key} className="relative">
-                      <Icon className="absolute left-3 top-3.5 text-white/40" />
-                      <input type={type} required minLength={minLength} className={inp} placeholder={ph}
-                        value={registerData[key]}
-                        onChange={(e) => setRegisterData({ ...registerData, [key]: e.target.value })} />
-                      {key === 'password' && (
-                        <button type="button" onClick={() => setShowPwd(!showPwd)}
-                          className="absolute right-3 top-3.5 text-white/40 hover:text-white/80 transition-colors">
-                          {showPwd ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <motion.button type="submit" disabled={loading}
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className={`w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-r ${btnGrad}
-                      shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60`}>
-                    {loading
-                      ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating...</>
-                      : <>Create Admin Account <FiArrowRight /></>}
-                  </motion.button>
-                </motion.form>
-              )}
+              {/* REGISTER form removed — admin accounts created via backend only */}
 
               {/* FORGOT */}
               {view === 'forgot' && (

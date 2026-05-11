@@ -3,6 +3,8 @@ import * as faceapi from 'face-api.js';
 import { toast } from 'react-toastify';
 import { FiCamera, FiCheckCircle, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
 import { faceAttendanceAPI } from '../services/api';
+import { Capacitor } from '@capacitor/core';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 const MODEL_URL = '/models';
 
@@ -54,18 +56,24 @@ const AdminFaceRegister = ({ employee, onSuccess }) => {
       ]);
 
       setStatusMsg('Starting camera...');
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
-      });
-      streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play();
-          setStatus(STATUS.READY);
-          setStatusMsg(`Position ${employee.name}'s face in the camera`);
-        };
+      if (Capacitor.isNativePlatform()) {
+        // On Android APK: use Capacitor Camera plugin
+        await startCapacitorCamera();
+      } else {
+        // On web browser: use getUserMedia
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play();
+            setStatus(STATUS.READY);
+            setStatusMsg(`Position ${employee.name}'s face in the camera`);
+          };
+        }
       }
     } catch (err) {
       setStatus(STATUS.ERROR);
@@ -77,6 +85,54 @@ const AdminFaceRegister = ({ employee, onSuccess }) => {
     }
   };
 
+  const startCapacitorCamera = async () => {
+    // Take photo using Capacitor Camera plugin
+    const photo = await Camera.getPhoto({
+      quality: 90,
+      allowEditing: false,
+      resultType: CameraResultType.DataUrl,
+      source: CameraSource.Camera,
+      direction: 'front',
+    });
+
+    // Load the captured image into an <img> for face-api detection
+    const img = new Image();
+    img.src = photo.dataUrl;
+    await new Promise((res) => (img.onload = res));
+
+    setStatus(STATUS.CAPTURING);
+    setStatusMsg('Analyzing face...');
+
+    const descriptors = [];
+    for (let i = 0; i < 5; i++) {
+      const det = await faceapi
+        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks(true)
+        .withFaceDescriptor();
+      if (det) {
+        descriptors.push(Array.from(det.descriptor));
+        setSampleCount(i + 1);
+      }
+    }
+
+    if (descriptors.length === 0) {
+      setStatus(STATUS.ERROR);
+      setStatusMsg('No face detected. Ensure good lighting and try again.');
+      return;
+    }
+
+    const avg = descriptors[0].map((_, i) =>
+      descriptors.reduce((s, d) => s + d[i], 0) / descriptors.length
+    );
+
+    await faceAttendanceAPI.registerFace(employee.id, avg);
+    setStatus(STATUS.SUCCESS);
+    setStatusMsg(`Face registered for ${employee.name}!`);
+    toast.success(`Face registered for ${employee.name}`);
+    if (onSuccess) onSuccess();
+    setTimeout(close, 2000);
+  };
+
   const close = () => {
     stopCamera();
     setIsOpen(false);
@@ -86,6 +142,7 @@ const AdminFaceRegister = ({ employee, onSuccess }) => {
   };
 
   const handleCapture = async () => {
+    if (Capacitor.isNativePlatform()) return; // handled by startCapacitorCamera
     setStatus(STATUS.CAPTURING);
     setStatusMsg('Scanning face... hold still');
     try {

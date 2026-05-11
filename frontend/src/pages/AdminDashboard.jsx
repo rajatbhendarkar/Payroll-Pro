@@ -58,7 +58,7 @@ const AdminDashboard = () => {
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <div className="lg:ml-64 flex-1 p-4 md:p-8 overflow-auto">
+      <div className="lg:ml-64 flex-1 p-4 md:p-8 pt-16 lg:pt-8 overflow-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
