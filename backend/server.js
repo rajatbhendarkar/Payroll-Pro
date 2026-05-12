@@ -46,3 +46,11 @@ const startServer = async () => {
 };
 
 startServer();
+
+// Keep Render free tier awake (ping every 14 min)
+if (process.env.NODE_ENV === 'production') {
+  const https = require('https');
+  setInterval(() => {
+    https.get('https://payroll-pro-seqp.onrender.com/').on('error', () => {});
+  }, 14 * 60 * 1000);
+}
